@@ -1,4 +1,4 @@
-from __future__ import print_function, absolute_import, division
+#from __future__ import print_function, absolute_import, division
 #============================================================
 # File me1.py
 #
@@ -17,12 +17,13 @@ from __future__ import print_function, absolute_import, division
 #               2x faster but cannot specifiy significant digits
 #               in stoich coefficients.
 # 18 May 2016:  moved make_dilution_fluxes to ME_NLP (ME_NLP1 inherits)
+# 15 Apr 2022:  Updated to play well with new cobraME package
 #============================================================
 
 from qminospy.me2 import ME_NLP, makeME_LP, makeME_LP_for_NLP, makeME_NLP, makeME_VA
 from qminospy.me2 import make_nonlin_constraints, make_linear_constraints
 from qminospy import qwarmLP
-from cobra.core.Solution import Solution
+from cobra.core import Solution
 from cobra import DictList
 from cobra import Reaction, Metabolite
 from sympy import lambdify, Basic, Symbol
@@ -35,7 +36,7 @@ import numpy as np
 import time
 import warnings
 import six
-import cobrame
+#import cobrame
 import re
 
 class ME_NLP1(ME_NLP):
@@ -135,7 +136,7 @@ class ME_NLP1(ME_NLP):
         04 Aug 2016: ME 1.0 version
         """
         from qminospy import qvaryME
-        from cobrame import mu
+        #from cobrame import mu
         import time as time
         import six
 
@@ -425,7 +426,7 @@ class ME_NLP1(ME_NLP):
         if check_feas0:
             x0, stat0, hs0 = self.solvelp(zero_mu, nlp_compat=nlp_compat, verbosity=verbosity,
                     precision=solver_precision, basis=hs)
-            if me.solution.status is not 'optimal':
+            if me.solution.status != 'optimal':
                 warnings.warn('Infeasible at mu=%g. Returning.'%zero_mu)
                 return zero_mu, hs0, x0, cache
             else:
@@ -437,7 +438,7 @@ class ME_NLP1(ME_NLP):
                 x_new, stat_new, hs_new = self.solvelp(
                     muf, basis=hs, nlp_compat=nlp_compat, verbosity=verbosity,
                     precision=solver_precision)
-                if me.solution.status is 'optimal':
+                if me.solution.status == 'optimal':
                     hs = hs_new
                 stat = me.solution.status
                 sol = cp.deepcopy(me.solution)
@@ -463,7 +464,7 @@ class ME_NLP1(ME_NLP):
             mu1 = (a+b)/2.
             # Retrieve evaluation from cache if it exists: golden section advantage
             stat1, hs, sol1, x1 = checkmu(mu1, hs)
-            if stat1 is 'optimal':
+            if stat1 == 'optimal':
                 a = mu1
                 muopt = mu1
                 solution = sol1
@@ -511,7 +512,7 @@ class ME_NLP1(ME_NLP):
         if check_feas0:
             x0, stat0, hs0 = self.solvelp(zero_mu, nlp_compat=nlp_compat, verbosity=verbosity,
                     precision=solver_precision)
-            if me.solution.status is not 'optimal':
+            if me.solution.status != 'optimal':
                 warnings.warn('Infeasible at mu=%g. Returning.'%zero_mu)
                 return zero_mu, hs0, x0, cache
             else:
@@ -522,7 +523,7 @@ class ME_NLP1(ME_NLP):
                 x_new, stat_new, hs_new = self.solvelp(
                     muf, basis=hs, nlp_compat=nlp_compat, verbosity=verbosity,
                     precision=solver_precision)
-                if me.solution.status is 'optimal':
+                if me.solution.status == 'optimal':
                     hs = hs_new
                 stat = me.solution.status
                 sol = cp.deepcopy(me.solution)
@@ -551,14 +552,14 @@ class ME_NLP1(ME_NLP):
             mu2 = a + (b - a) * phi
             # Retrieve evaluation from cache if it exists: golden section advantage
             stat1, hs, sol1, x1 = checkmu(mu1, hs)
-            if stat1 is not 'optimal':
+            if stat1 != 'optimal':
                 # Implies stat2 is also infeasible
                 #b = mu2
                 b = mu1
                 stat2 = 'infeasible'
             else:
                 stat2, hs, sol2, x2 = checkmu(mu2, hs)
-                if stat2 is not 'optimal':
+                if stat2 != 'optimal':
                     a = mu1  # a is feasible
                     b = mu2
                     muopt = mu1
@@ -658,7 +659,7 @@ class ME_NLP1(ME_NLP):
         # Check feasibility at 0.0?
         if check_feas0:
             x0, stat0, hs0 = self.solvelp(zero_mu, nlp_compat=True, verbosity=verbosity)
-            if stat0 is not 'optimal':
+            if stat0 != 'optimal':
                 #raise ValueError('Infeasible at mu=0.0. Stopping.')
                 warnings.warn('Infeasible at mu=%g. Returning.'%zero_mu)
                 return x0, stat0, hs0

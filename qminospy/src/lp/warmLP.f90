@@ -17,7 +17,7 @@
 !   2) Compile with qminos library linked, and generate .so file to import into python:
 !      f2py -c qwarmLP.pyf qwarmLP.f90 -L/home/laurence/Software/qminos1114/qminos56/lib -lquadminos
 !
-!   3) From python: 
+!   3) From python:
 !      import qwarmLP
 !      import numpy as np
 !      inform = np.array(0)     # gets modified by qsolveme: in/output exit flag
@@ -25,14 +25,14 @@
 !      x = qwarmLP.qwarmlp(inform, mu0, probname, M, nncon, nnJac, neJac, ha,
 !      ka, ad, bl, bu, nb, N, ne)
 !
-! 13 Aug 2015: first version. 
+! 13 Aug 2015: first version.
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 subroutine warmLP(xn,pi,rc, inform, nb, Probname, m, n, ne, &
     ha, ka, ad, bld, bud, hs, warm, &
     nStrOpts, nIntOpts, nRealOpts, stropts, intopts, realopts, intvals, realvals)
-  ! all allocatable arrays passed to minoss are stored here 
+  ! all allocatable arrays passed to minoss are stored here
 
   implicit none
 
@@ -80,9 +80,9 @@ subroutine warmLP(xn,pi,rc, inform, nb, Probname, m, n, ne, &
   real(dp)                  :: bl(nb), bu(nb)
   real(dp),     allocatable :: cObj(:)
   ! 21 Mar 2016: [LY] return pi (shadow prices) and rc (reduced costs)
-  real(dp),     intent(out) :: pi(m) 
+  real(dp),     intent(out) :: pi(m)
   real(dp),     intent(out) :: rc(nb)
-  real(dp),     intent(out) :: xn(nb)         ! double-rounded version of xn, which is quad 
+  real(dp),     intent(out) :: xn(nb)         ! double-rounded version of xn, which is quad
 
   integer(ip),  allocatable :: name1(:), name2(:)
   character(8)              :: names(5)
@@ -100,7 +100,7 @@ subroutine warmLP(xn,pi,rc, inform, nb, Probname, m, n, ne, &
 
   !------------------------------------------------------------------
   ! Allocate workspace
-  print*, 'Allocating z'
+!   print*, 'Allocating z'
   allocate(z(lenz))
 
 
@@ -109,10 +109,10 @@ subroutine warmLP(xn,pi,rc, inform, nb, Probname, m, n, ne, &
   bu = real(bud,dp)
 
 
-  print*, 'Allocating name1, name2'
+!   print*, 'Allocating name1, name2'
   allocate( name1(nname), name2(nname) )
 
-  print*, 'No Jacobian matrix since no nonlinear obj or constraints'
+!   print*, 'No Jacobian matrix since no nonlinear obj or constraints'
   nnCon     = 0
   nnJac     = 0
   nnObj     = 0
@@ -155,24 +155,24 @@ subroutine warmLP(xn,pi,rc, inform, nb, Probname, m, n, ne, &
   ! Specify options directly
   ! Options written as one string
   do i=1, nStrOpts
-    write(*,*) 'Calling miopt to set option: ', trim(stropts(i))
+!     write(*,*) 'Calling miopt to set option: ', trim(stropts(i))
     call miopt(trim(stropts(i)), iprint, isumm, inform)
   end do
 
   ! Integer valued options
   do i=1, nIntOpts
-    write(*,*) 'Calling miopti to set option ', trim(intopts(i)), ' to ', intvals(i)
+!     write(*,*) 'Calling miopti to set option ', trim(intopts(i)), ' to ', intvals(i)
     call miopti(trim(intopts(i)), intvals(i), iprint, isumm, inform)
   end do
 
   ! Real-valued options
   do i=1, nRealOpts
-    write(*,*) 'Calling mioptr to set option ', trim(realopts(i)), ' to ', realvals(i)
+!     write(*,*) 'Calling mioptr to set option ', trim(realopts(i)), ' to ', realvals(i)
     call mioptr(trim(realopts(i)), realvals(i), iprint, isumm, inform)
   end do
   !**********************************************************
   ! DEBUG
-  print *, 'Set all options'
+!   print *, 'Set all options'
   !**********************************************************
 
   !----------------------------------------------------------------------
@@ -241,7 +241,7 @@ subroutine warmLP(xn,pi,rc, inform, nb, Probname, m, n, ne, &
       write(nout, *) 'obj    =', obj
 
   else
-      print *, 'Calling minoss. Cold start' 
+      print *, 'Calling minoss. Cold start'
 
       call minoss( 'Cold', m, n, nb, ne, nname,        &
           nncon, nnobj, nnjac,                &

@@ -1,4 +1,4 @@
-from __future__ import print_function, absolute_import
+#from __future__ import print_function, absolute_import
 #============================================================
 # File me2.py
 #
@@ -18,11 +18,12 @@ from __future__ import print_function, absolute_import
 # 05 Oct 2016:  renamed qnonlinme to me2. Keeping qnonlinme.py
 #               for backwards compatibility, where we just import *
 #               from me2.py
+# 15 Apr 2022:  Updated to play well with new cobraME package
 #============================================================
 
 import numpy as np
 import scipy.sparse as sps
-from cobra.core.Solution import Solution
+from cobra.core import Solution
 from cobra import DictList
 from cobra import Reaction, Metabolite
 from sympy import Basic
@@ -31,7 +32,7 @@ import warnings
 import cobrame
 from qminospy import qwarmLP
 from qminospy import warmLP
-from cobrame import MEModel
+#from cobrame.core.model import MEModel
 import re
 import six
 
@@ -47,16 +48,16 @@ class ME_NLP:
         self.growth_key = growth_key
         self.growth_rxn = growth_rxn
         self.scaleUnits = False
-        self.typeM = [cobrame.MetabolicReaction]
-        self.typeE = [cobrame.TranscriptionReaction,
-                      cobrame.TranslationReaction, 
-                      cobrame.ComplexFormation]
+        self.typeM = [cobrame.core.reaction.MetabolicReaction]
+        self.typeE = [cobrame.core.reaction.TranscriptionReaction,
+                      cobrame.core.reaction.TranslationReaction,
+                      cobrame.core.reaction.ComplexFormation]
         self.unitDict = {
                 'e_mult': 1e-6,
                 'typeE': self.typeE,
                 'typeM': self.typeM,
                 'rows_compl': get_rows_compl(me, self.typeM, self.typeE)
-                } 
+                }
         # Reformulation of ME to NLP
         self.A = None
         self.B = None
@@ -260,7 +261,7 @@ class ME_NLP:
         """
         Construct LP whose basis is compatible with ME-NLP
         """
-        from cobrame import mu
+        #from cobrame import mu
 
         me = self.me
 
@@ -282,13 +283,13 @@ class ME_NLP:
             lb = rxn.lower_bound
             ub = rxn.upper_bound
             if hasattr(lb, 'subs'):
-                xl[j] = float(lb.subs(mu, mu_fix))
+                xl[j] = float(lb.subs(cobrame.util.mu, mu_fix))
             if hasattr(ub, 'subs'):
-                xu[j] = float(ub.subs(mu, mu_fix))
+                xu[j] = float(ub.subs(cobrame.util.mu, mu_fix))
 
         # This J has extra row added. Also, bl & bu have extra slack (unbounded) for
         # the "objective" row
-        J, ne, P, I, V, bl, bu = makeME_LP_for_NLP(A,B,S,b,c,xl,xu) 
+        J, ne, P, I, V, bl, bu = makeME_LP_for_NLP(A,B,S,b,c,xl,xu)
 
         # Solve a single LP
         m,n = J.shape
@@ -304,9 +305,9 @@ class ME_NLP:
 
     def make_lp(self, mu_fix, verbosity=0):
         """
-        Construct LP problem for qMINOS or MINOS. 
+        Construct LP problem for qMINOS or MINOS.
         """
-        from cobrame import mu
+        #from cobrame import mu
 
         me = self.me
         S = me.construct_S(mu_fix).tocsc()
@@ -317,9 +318,9 @@ class ME_NLP:
             lb = rxn.lower_bound
             ub = rxn.upper_bound
             if hasattr(lb, 'subs'):
-                xl[j] = float(lb.subs(mu, mu_fix))
+                xl[j] = float(lb.subs(cobrame.util.mu, mu_fix))
             if hasattr(ub, 'subs'):
-                xu[j] = float(ub.subs(mu, mu_fix))
+                xu[j] = float(ub.subs(cobrame.util.mu, mu_fix))
 
         #b = [0. for m in me.metabolites]
         b = [m._bound for m in me.metabolites]
@@ -327,7 +328,7 @@ class ME_NLP:
         # constraint sense eventually be in the metabolite...
         # csense = ['E' for m in me.metabolites]
         csense = [m._constraint_sense for m in me.metabolites]
-        J, ne, P, I, V, bl, bu = makeME_LP(S,b,c,xl,xu,csense) 
+        J, ne, P, I, V, bl, bu = makeME_LP(S,b,c,xl,xu,csense)
 
         # Solve a single LP
         m,n = J.shape
@@ -344,7 +345,7 @@ class ME_NLP:
     def solvelp(self, muf, quad=True, basis=None, nlp_compat=False, verbose=False,
             lpopt_file = 'fort.14', verbosity=0, precision='quad'):
         """
-        x, status, hs = solvelp(self, muf, quad=True, basis=None, nlp_compat=False, verbose=False) 
+        x, status, hs = solvelp(self, muf, quad=True, basis=None, nlp_compat=False, verbose=False)
 
         Solve LP at mu using qMINOS (quad=True) or MINOS (quad=False).
         Pass the basis (hs) back and forth with Fortran for warm-start.
@@ -465,7 +466,14 @@ class ME_NLP:
         status = self.inform
         if int(status) == 0:
             status = 'optimal'
-        self.me.solution = Solution(f, x_primal, x_dict, y, y_dict, 'qminos', time_elapsed, status)
+        #self.me.solution = Solution(f, x_primal, x_dict, y, y_dict, 'qminos', time_elapsed, status)
+        self.me.solution = Solution(
+			objective_value = x_dict['biomass_dilution'],
+			status = status,
+			fluxes = x_dict, # x_primal is a np.array with only fluxes info
+			reduced_costs = y_dict,
+			shadow_prices = None,
+			)
 
         return x, status, hs
 
@@ -499,9 +507,9 @@ class ME_NLP:
         if check_feas0:
             x0, stat0, hs0 = self.solvelp(zero_mu, nlp_compat=nlp_compat, verbosity=verbosity,
                     basis=hs)
-            if me.solution.status is not 'optimal':
+            if me.solution.status != 'optimal':
                 warnings.warn('Infeasible at mu=%g. Returning.'%zero_mu)
-                return zero_mu, hs0, x0, cache 
+                return zero_mu, hs0, x0, cache
             else:
                 hs = hs0
 
@@ -509,7 +517,7 @@ class ME_NLP:
             if muf not in cache:
                 x_new, stat_new, hs_new = self.solvelp(
                     muf, basis=hs, nlp_compat=nlp_compat, verbosity=verbosity)
-                if me.solution.status is 'optimal':
+                if me.solution.status == 'optimal':
                     hs = hs_new
                 stat = me.solution.status
                 sol = cp.deepcopy(me.solution)
@@ -532,7 +540,7 @@ class ME_NLP:
             mu1 = (a+b)/2.
             # Retrieve evaluation from cache if it exists: golden section advantage
             stat1, hs, sol1, x1 = checkmu(mu1, hs)
-            if stat1 is 'optimal':
+            if stat1 == 'optimal':
                 a = mu1
                 muopt = mu1
                 solution = sol1
@@ -550,12 +558,12 @@ class ME_NLP:
         # Save final solution
         me.solution = solution
 
-        return muopt, hs, xopt, cache 
+        return muopt, hs, xopt, cache
 
 
     def bisectme(self, precision=1e-3, mumin=0.0, mumax=2.0, maxIter=100, quad=True, golden=True, basis=None, nlp_compat=False, check_feas0=False, zero_mu=1e-3, verbosity=0):
         """
-        [Deprecated] legacy bisection using qMINOS. 
+        [Deprecated] legacy bisection using qMINOS.
         TODO: set quad=False if need fast basis for subsequent quadMINOS
         """
         import copy as cp
@@ -575,9 +583,9 @@ class ME_NLP:
         # Check feasibility at mu=zero?
         if check_feas0:
             x0, stat0, hs0 = self.solvelp(zero_mu, nlp_compat=nlp_compat)
-            if me.solution.status is not 'optimal':
+            if me.solution.status != 'optimal':
                 warnings.warn('Infeasible at mu=%g. Returning.'%zero_mu)
-                return zero_mu, hs0, x0, cache 
+                return zero_mu, hs0, x0, cache
             else:
                 hs = hs0
 
@@ -585,7 +593,7 @@ class ME_NLP:
             if muf not in cache:
                 x_new, stat_new, hs_new = self.solvelp(
                     muf, basis=hs, nlp_compat=nlp_compat, verbosity=verbosity)
-                if me.solution.status is 'optimal':
+                if me.solution.status == 'optimal':
                     hs = hs_new
                 stat = me.solution.status
                 sol = cp.deepcopy(me.solution)
@@ -612,21 +620,21 @@ class ME_NLP:
             mu2 = a + (b - a) * phi
             # Retrieve evaluation from cache if it exists: golden section advantage
             stat1, hs, sol1, x1 = checkmu(mu1, hs)
-            if stat1 is not 'optimal':
+            if stat1 != 'optimal':
                 # Implies stat2 is also infeasible
                 #b = mu2
                 b = mu1
                 stat2 = 'infeasible'
             else:
                 stat2, hs, sol2, x2 = checkmu(mu2, hs)
-                if stat2 is not 'optimal':
+                if stat2 != 'optimal':
                     a = mu1  # a is feasible
                     b = mu2
                     muopt = mu1
                     solution = sol1
                     xopt = x1
                 else:        # both feasible
-                    a = mu2 
+                    a = mu2
                     muopt = mu2
                     solution = sol2
                     xopt = x2
@@ -641,7 +649,7 @@ class ME_NLP:
         # Save final solution
         me.solution = solution
 
-        return muopt, hs, xopt, cache 
+        return muopt, hs, xopt, cache
 
 
     def make_nlp(self, verbosity=0):
@@ -653,7 +661,7 @@ class ME_NLP:
         if self.A is None:
             self.make_matrices()
 
-        J,nnCon,nnJac,neJac,ne,P,I,V,bl,bu = makeME_NLP(self.A, self.B, 
+        J,nnCon,nnJac,neJac,ne,P,I,V,bl,bu = makeME_NLP(self.A, self.B,
                 self.S, self.b, self.c, self.xl, self.xu)
 
         M,N = J.shape
@@ -700,7 +708,7 @@ class ME_NLP:
         12 Aug 2015: first version. Must fix bugs.
         """
         from qminospy import qvaryME
-        from cobrame import mu
+        #from cobrame import mu
         import time as time
         import six
 
@@ -724,9 +732,9 @@ class ME_NLP:
             lb = rxn.lower_bound
             ub = rxn.upper_bound
             if hasattr(lb, 'subs'):
-                xl[j] = float(lb.subs(mu, mu_fixed))
+                xl[j] = float(lb.subs(cobrame.util.mu, mu_fixed))
             if hasattr(ub, 'subs'):
-                xu[j] = float(ub.subs(mu, mu_fixed))
+                xu[j] = float(ub.subs(cobrame.util.mu, mu_fixed))
 
         b = [m._bound for m in me.metabolites]
         c = [r.objective_coefficient for r in me.reactions]
@@ -782,7 +790,7 @@ class ME_NLP:
         # Return result consistent with cobrame fva
         fva_result = {
             (self.me.reactions[obj_inds0[2*i]].id):{
-                'maximum':obj_vals[2*i], 
+                'maximum':obj_vals[2*i],
                 'minimum':obj_vals[2*i+1] } for i in range(0, nVary/2) }
 
         # Save updated basis
@@ -793,10 +801,10 @@ class ME_NLP:
 
     def reorder_rxns(self, rxn_list, where='first'):
         """
-        rxnids_old = reorder_rxns(self, rxns, where='first') 
+        rxnids_old = reorder_rxns(self, rxns, where='first')
 
         Inputs:
-        rxns        [cobra.Reaction] or [str] 
+        rxns        [cobra.Reaction] or [str]
         where       push given rxns 'first' or 'last'
 
         Values:
@@ -925,12 +933,12 @@ class ME_NLP:
         Update matrices and NLP based on bounds in self.me
         from ME model
         """
-        # J,nnCon,nnJac,neJac,ne,P,I,V,bl,bu = makeME_NLP(self.A, self.B, 
+        # J,nnCon,nnJac,neJac,ne,P,I,V,bl,bu = makeME_NLP(self.A, self.B,
         #         self.S, self.b, self.c, self.xl, self.xu)
         for j,rxn in enumerate(self.me.reactions):
             # If mu in bounds, warn and set to unbounded
-            lb = rxn.lower_bound 
-            ub = rxn.upper_bound 
+            lb = rxn.lower_bound
+            ub = rxn.upper_bound
             if hasattr(lb, 'subs'):
                 warnings.warn('lb for %s is mu-dependent. Setting to 0.0'%(rxn.id))
                 lb = 0.0
@@ -948,7 +956,7 @@ class ME_NLP:
                  auto_update_bounds=True, auto_update_obj=True, verbosity=0):
         """
         x, stat, hs = solvenlp(self, precision=0.01, max_iter=20, check_feas0=False,
-                               zero_mu=1e-3, basis=None) 
+                               zero_mu=1e-3, basis=None)
 
         The combined solution procedure: bisection (golden section) to
         get initial mu0, followed by qsolveME to find mu*
@@ -961,7 +969,7 @@ class ME_NLP:
         # Check feasibility at mu0 = zero_mu?
         if check_feas0:
             x0, stat0, hs0 = self.solvelp(zero_mu, nlp_compat=True, basis=None)
-            if stat0 is not 'optimal':
+            if stat0 != 'optimal':
                 #raise ValueError('Infeasible at mu=0.0. Stopping.')
                 warnings.warn('Infeasible at mu=%g. Returning.'%zero_mu)
                 return x0, stat0, hs0
@@ -1020,7 +1028,7 @@ class ME_NLP:
         nIntOpts = len(self.opt_intdict[prob].keys())
 
         stropts  = np.array(
-                np.array([c for c in [s.ljust(self.opt_strwidth[prob]) for 
+                np.array([c for c in [s.ljust(self.opt_strwidth[prob]) for
                                       s in self.opt_strlist[prob]]],
                     dtype='c').T)
         self.opt_stropts[prob] = stropts
@@ -1062,8 +1070,8 @@ class ME_NLP:
         Allow dilution to be >= sum_j mu/keffj v_usagej (i.e., that accounted for by
         sum of complex usage fluxes). Useful when forcing macromolecule synthesis
         beyond usable capacity.
-        
-        Simply add EXTRA_DILUTION flux for every diluted macromolecule. 
+
+        Simply add EXTRA_DILUTION flux for every diluted macromolecule.
         Works because we would only allow >= constraints on dilution flux anyway.
 
         Inputs:
@@ -1084,7 +1092,7 @@ class ME_NLP:
         constraints_dil = []    # return dilution coupling constraints
         macromol_error = []     # report macromolecules where failed to add dilution
 
-        if isinstance(me, MEModel):
+        if isinstance(me, cobrame.core.model.MEModel):
             """
             For now, should only support this function for cobrame models
             since ME 1.0 models already have separate dilution fluxes
@@ -1157,7 +1165,7 @@ def writeME_NLP(me, outname=None):
     """
     A,B,d,S,b,c,xl,xu,csense,csense_nonlin = me2nlp(me)
     J, nnCon, nnJac, neJac, nzS, P, I, V, bl, bu  = makeME_NLP(A,B,S,b,c,xl,xu)
-    if outname is not None:
+    if outname != None:
         print('Writing to file: ', outname)
         dumpMat(J, outname, nnCon, nnJac, neJac, nzS, P, I, V, bl, bu)
         print('Done!')
@@ -1167,8 +1175,8 @@ def writeME_NLP(me, outname=None):
 
 def me2nlp(me, growth_symbol='mu', scaleUnits=False, LB=0.0, UB=1000.0,
            growth_rxn='biomass_dilution', unitDict={'e_mult': 1e-6,
-              'typeE': [cobrame.TranscriptionReaction,
-                        cobrame.TranslationReaction]},
+              'typeE': [cobrame.core.reaction.TranscriptionReaction,
+                        cobrame.core.reaction.TranslationReaction]},
               max_mu=True):
     """
     From ME model object, create NLP data matrices of the form:
@@ -1220,7 +1228,7 @@ def me2nlp(me, growth_symbol='mu', scaleUnits=False, LB=0.0, UB=1000.0,
     xl = np.matrix([r.lower_bound for r in me.reactions]).transpose()
     xu = np.matrix([r.upper_bound for r in me.reactions]).transpose()
 
-#   Sept 04, 2015: skip because comparing mu in numpy arrays seems to 
+#   Sept 04, 2015: skip because comparing mu in numpy arrays seems to
 #   cause "cannot compare the truth value of ..." error in some installations
 #     print('xl: ', xl.min(), xl.max())
 #     print('xu: ', xu.min(), xu.max())
@@ -1241,8 +1249,8 @@ def me2nlp_general(me, growth_symbol='mu', scaleUnits=False, LB=0.0, UB=1000.0,
                    growth_rxn='biomass_dilution',
                    unitDict={'e_mult': 1e-6,
                              'typeE': [
-                                 cobrame.TranscriptionReaction,
-                                 cobrame.TranslationReaction]},
+                                 cobrame.core.reaction.TranscriptionReaction,
+                                 cobrame.core.reaction.TranslationReaction]},
                    max_mu=True):
     """
     From ME model object, create NLP data matrices of the form:
@@ -1313,7 +1321,7 @@ def make_nonlin_constraints(me, mets_nonlin, growth_symbol='mu', scaleUnits=Fals
     # Find columns involved in nonlinear terms
 #     rxns_nonlin = set (
 #             [rxn for sublist in ([met.reactions for met in mets_nonlin ]) for rxn in sublist ]
-#             ) 
+#             )
     # Make constraints
     cons_nl = get_nonlin_triplets(me, mets_nonlin, growth_symbol, scaleUnits, unitDict)
     dataA = [a for m,r,a,b in cons_nl if a != 0]
@@ -1415,7 +1423,7 @@ def get_nonlin_triplets_general(model, mets_nonlin, growth_symbol='mu',
         param_values=None):
     """
     cons_nl = get_nonlin_triplets_general(model, mets_nonlin, growth_symbol='mu',
-        scaleUnits=False, unitDict=None, param_values=None) 
+        scaleUnits=False, unitDict=None, param_values=None)
 
     Generalized functions for nonlinear constraints.
     """
@@ -1472,7 +1480,7 @@ def make_linear_constraints(me, mets_linear, scaleUnits=False, unitDict=None):
     if scaleUnits:
         for ind, mrsi in enumerate(mrs):
             if mrsi[2] in unitDict['rows_compl'] and type(r) in unitDict['typeE']:
-                mrs[ind] = s*unitDict['e_mult'] 
+                mrs[ind] = s*unitDict['e_mult']
 
     data = [s for m,r,s in mrs]
     # Major bottleneck: list.index(m)
@@ -1511,7 +1519,7 @@ def writeME_NLP_from_file(infile = 'scaledME_NLP.mat', outname=None):
     xl = model['lb'][0][0]   # 1755 vector
     xu = model['ub'][0][0]   # 1755 vector
     J, nnCon, nnJac, neJac, nzS, P, I, V, bl, bu  = makeME_NLP(A,B,S,b,c,xl,xu)
-    if outname is not None:
+    if outname != None:
         print('Writing to file: ', outname)
         dumpMat(J, outname, nnCon, nnJac, neJac, nzS, P, I, V, bl, bu)
         print('Done!')
@@ -1525,7 +1533,7 @@ def makeME_LP(S, b, c, xl, xu, csense):
     Create simple LP for qMINOS and MINOS
     Inputs:
     nlp_compat  Make matrices compatible with NLP so that basis can
-                be used to warm start NLP by setting 
+                be used to warm start NLP by setting
     12 Aug 2015: first version
     """
     import numpy as np
@@ -1533,7 +1541,7 @@ def makeME_LP(S, b, c, xl, xu, csense):
     import scipy.sparse as sps
     import time
 
-    # c is added as a free (unbounded slacks) row, 
+    # c is added as a free (unbounded slacks) row,
     # so that MINOS treats problem as an LP - Ding Ma
     J = sps.vstack((
         S,
@@ -1669,7 +1677,7 @@ def makeME_VA(S,b,xl,xu,csense,obj_inds,obj_coeffs):
     import time
 
     # qMINOS requires an extra row holding the objective
-    # Put ANY non-zero for all columns that will be min/maxed 
+    # Put ANY non-zero for all columns that will be min/maxed
     Sm,Sn = S.shape
     c = [0. for j in range(0,Sn)]
     for j,v in zip(obj_inds, obj_coeffs):
@@ -1732,7 +1740,7 @@ def makeME_VA(S,b,xl,xu,csense,obj_inds,obj_coeffs):
 def makeME_NLP(A, B, S, b, c, xl, xu):
     """
     Creates ME NLP data matrix to be passed to qsolveME
-    Basically the same matrix as dumpMat, but returns object 
+    Basically the same matrix as dumpMat, but returns object
     in RAM instead of writing to a file
     [LY] 21 Jul 2015: first version
     """
@@ -1854,7 +1862,7 @@ def dumpMat(S, name, nnCon, nnJac, neJac, nzS, P, I, V, bl=None, bu=None):
 #     for j in xrange(0,n):
 #         P[j] = p
 #         p = p + S[:,j].nnz
-# 
+#
 #     P[n] = p
     #************************************************************
     # Write to file
@@ -1868,15 +1876,15 @@ def dumpMat(S, name, nnCon, nnJac, neJac, nzS, P, I, V, bl=None, bu=None):
         f.write('%8i\n' % nzS)        # Num of nonzeros in S
         # Write as 1-based indexing
         for Pi in P:
-            f.write('%8i\n'%Pi)     # Pointers      n+1 
+            f.write('%8i\n'%Pi)     # Pointers      n+1
         for Ii in I:
-            f.write('%8i\n'%(Ii))      # Row indices   nzS 
+            f.write('%8i\n'%(Ii))      # Row indices   nzS
         for Vi in V:
             f.write('%19.12e\n'%Vi)  # Values nzS; roughly double precision
-        if bl is not None:
+        if bl != None:
             for bli in bl:
                 f.write('%19.12e\n'%bli)
-        if bu is not None:
+        if bu != None:
             for bui in bu:
                 f.write('%19.12e\n'%bui)
 
@@ -1906,7 +1914,7 @@ def get_lin_nonlin_mets(me, growth_symbol='mu'):
 
 def split_lin_nonlin(me, growth_symbol='mu'):
     """
-    mets_lin, mets_nonlin, rxns_lin, rxns_nonlin = split_lin_nonlin(me, growth_symbol='mu') 
+    mets_lin, mets_nonlin, rxns_lin, rxns_nonlin = split_lin_nonlin(me, growth_symbol='mu')
     Split constraints and variables into linear and nonlinear sets
     """
     from sympy import Basic
