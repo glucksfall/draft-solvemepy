@@ -28,7 +28,7 @@ from cobra import Reaction, Metabolite
 from sympy import Basic
 import time
 import warnings
-import cobrame
+import draft_cobrame
 from qminospy import qwarmLP
 from qminospy import warmLP
 import re
@@ -46,10 +46,10 @@ class ME_NLP:
         self.growth_key = growth_key
         self.growth_rxn = growth_rxn
         self.scaleUnits = False
-        self.typeM = [cobrame.MetabolicReaction]
-        self.typeE = [cobrame.TranscriptionReaction,
-                      cobrame.TranslationReaction, 
-                      cobrame.ComplexFormation]
+        self.typeM = [draft_cobrame.MetabolicReaction]
+        self.typeE = [draft_cobrame.TranscriptionReaction,
+                      draft_cobrame.TranslationReaction, 
+                      draft_cobrame.ComplexFormation]
         self.unitDict = {
                 'e_mult': 1e-6,
                 'typeE': self.typeE,
@@ -259,7 +259,7 @@ class ME_NLP:
         """
         Construct LP whose basis is compatible with ME-NLP
         """
-        from cobrame import mu
+        from draft_cobrame import mu
 
         me = self.me
 
@@ -305,7 +305,7 @@ class ME_NLP:
         """
         Construct LP problem for qMINOS or MINOS. 
         """
-        from cobrame import mu
+        from draft_cobrame import mu
 
         me = self.me
         S = me.construct_S(mu_fix).tocsc()
@@ -672,7 +672,7 @@ class ME_NLP:
 
     def construct_S(self, growth_rate):
         """
-        From cobrame--in case me does not have construct_S
+        From draft_cobrame--in case me does not have construct_S
         """
         me = self.me
         growth_key = self.growth_key
@@ -699,7 +699,7 @@ class ME_NLP:
         12 Aug 2015: first version. Must fix bugs.
         """
         from qminospy import qvaryME
-        from cobrame import mu
+        from draft_cobrame import mu
         import time as time
         import six
 
@@ -778,7 +778,7 @@ class ME_NLP:
             print('Finished varyME in %f seconds for %d rxns (%d quadLPs)' %
                   (t_elapsed, len(rxns_fva), len(obj_inds)))
 
-        # Return result consistent with cobrame fva
+        # Return result consistent with draft_cobrame fva
         fva_result = {
             (self.me.reactions[obj_inds0[2*i]].id):{
                 'maximum':obj_vals[2*i], 
@@ -1073,7 +1073,7 @@ class ME_NLP:
 
         Make separate dilution fluxes for each complex, with specified
         constraint-sense.
-        Especially useful for cobrame (ME 2.0) models, where dilution fluxes
+        Especially useful for draft_cobrame (ME 2.0) models, where dilution fluxes
         are often constrained by equalities, and we sometimes want to work
         with inequalities (e.g., sampling keffs over a wider range without
         making model infeasible).
@@ -1083,9 +1083,9 @@ class ME_NLP:
         constraints_dil = []    # return dilution coupling constraints
         macromol_error = []     # report macromolecules where failed to add dilution
 
-        if isinstance(me, cobrame.core.MEModel.MEmodel):
+        if isinstance(me, draft_cobrame.core.MEModel.MEmodel):
             """
-            For now, should only support this function for cobrame models
+            For now, should only support this function for draft_cobrame models
             since ME 1.0 models already have separate dilution fluxes
             """
             #================================================
@@ -1166,8 +1166,8 @@ def writeME_NLP(me, outname=None):
 
 def me2nlp(me, growth_symbol='mu', scaleUnits=False, LB=0.0, UB=1000.0,
            growth_rxn='biomass_dilution', unitDict={'e_mult': 1e-6,
-              'typeE': [cobrame.TranscriptionReaction,
-                        cobrame.TranslationReaction]},
+              'typeE': [draft_cobrame.TranscriptionReaction,
+                        draft_cobrame.TranslationReaction]},
               max_mu=True):
     """
     From ME model object, create NLP data matrices of the form:
@@ -1240,8 +1240,8 @@ def me2nlp_general(me, growth_symbol='mu', scaleUnits=False, LB=0.0, UB=1000.0,
                    growth_rxn='biomass_dilution',
                    unitDict={'e_mult': 1e-6,
                              'typeE': [
-                                 cobrame.TranscriptionReaction,
-                                 cobrame.TranslationReaction]},
+                                 draft_cobrame.TranscriptionReaction,
+                                 draft_cobrame.TranslationReaction]},
                    max_mu=True):
     """
     From ME model object, create NLP data matrices of the form:
