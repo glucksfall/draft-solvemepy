@@ -36,7 +36,7 @@ import numpy as np
 import time
 import warnings
 import six
-#import cobrame
+#import draft_cobrame
 import re
 
 class ME_NLP1(ME_NLP):
@@ -98,7 +98,7 @@ class ME_NLP1(ME_NLP):
     def compile_expressions(self, verbosity=0):
         """
         Compile expressions for ME 1.0.
-        Use format consistent with cobrame:
+        Use format consistent with draft_cobrame:
         (met_index, rxn_index): stoichiometry, (None, rxn_index): (lower_bound, upper_bound)
         (met_index, None): (met_bound, met_constraint_sense)
         """
@@ -136,7 +136,7 @@ class ME_NLP1(ME_NLP):
         04 Aug 2016: ME 1.0 version
         """
         from qminospy import qvaryME
-        #from cobrame import mu
+        #from draft_cobrame import mu
         import time as time
         import six
 
@@ -197,7 +197,7 @@ class ME_NLP1(ME_NLP):
             print('Finished varyME in %f seconds for %d rxns (%d quadLPs)'%(t_elapsed,
                     len(rxns_fva), len(obj_inds)))
 
-        # Return result consistent with cobrame fva
+        # Return result consistent with draft_cobrame fva
         fva_result = {
             (self.me.reactions[obj_inds0[2*i]].id):{
                 'maximum':obj_vals[2*i],
