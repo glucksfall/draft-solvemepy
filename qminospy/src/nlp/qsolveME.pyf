@@ -1,0 +1,18 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module qsolveME ! in 
+    interface  ! in :qsolveME
+        module qmatrixa ! in :qsolveME:qmatrixA.f90
+            integer, public,parameter,optional :: ip=4
+            integer, public,parameter,optional :: dp=8
+            integer, public,parameter,optional :: qp=16
+            integer(kind=4), public,allocatable,dimension(:) :: haa
+            integer(kind=4), public,allocatable,dimension(:) :: kaa
+            real(kind=16), public,allocatable,dimension(:) :: aa
+        end module qmatrixa
+    end interface 
+end python module qsolveME
+
+! This file was auto-generated with f2py (version:1.21.6).
+! See http://cens.ioc.ee/projects/f2py2e/

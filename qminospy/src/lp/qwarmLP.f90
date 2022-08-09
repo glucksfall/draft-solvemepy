@@ -20,7 +20,7 @@
 !   2) Compile with qminos library linked, and generate .so file to import into python:
 !      f2py -c qwarmLP.pyf qwarmLP.f90 -L/home/laurence/Software/qminos1114/qminos56/lib -lquadminos
 !
-!   3) From python: 
+!   3) From python:
 !      import qwarmLP
 !      import numpy as np
 !      inform = np.array(0)     # gets modified by qsolveme: in/output exit flag
@@ -28,14 +28,14 @@
 !      x = qwarmLP.qwarmlp(inform, mu0, probname, M, nncon, nnJac, neJac, ha,
 !      ka, ad, bld, bud, nb, N, ne)
 !
-! 13 Aug 2015: first version. 
+! 13 Aug 2015: first version.
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 subroutine qwarmLP(xnd,pid,rcd, inform, nb, Probname, m, n, ne, &
     ha, ka, ad, bld, bud, hs, warm, &
     nStrOpts, nIntOpts, nRealOpts, stropts, intopts, realopts, intvals, realvalsd)
-  ! all allocatable arrays passed to minoss are stored here 
+  ! all allocatable arrays passed to minoss are stored here
 
   implicit none
 
@@ -93,7 +93,7 @@ subroutine qwarmLP(xnd,pid,rcd, inform, nb, Probname, m, n, ne, &
   real(dp),     intent(out) :: rcd(nb)         ! call qd on rc (qp)
 
   ! LY: make double version of xn, which will be intent(output) to python
-  real(dp),     intent(out) :: xnd(nb)         ! double-rounded version of xn, which is quad 
+  real(dp),     intent(out) :: xnd(nb)         ! double-rounded version of xn, which is quad
 
   integer(ip),  allocatable :: name1(:), name2(:)
   character(8)              :: names(5)
@@ -110,16 +110,16 @@ subroutine qwarmLP(xnd,pid,rcd, inform, nb, Probname, m, n, ne, &
   a = real(ad, qp)
 
 
-  print*, 'Allocating name1, name2'
+!   print*, 'Allocating name1, name2'
   allocate( name1(nname), name2(nname) )
 
-  print*, 'Allocating pi, rc, xn'
+!   print*, 'Allocating pi, rc, xn'
 !  allocate( hs(nb), pi(m), rc(nb), xn(nb) )
   allocate( pi(m), rc(nb), xn(nb) )
 
-  print *, 'Allocated pi, rc, xn'
+!   print *, 'Allocated pi, rc, xn'
 
-  print*, 'No Jacobian matrix since no nonlinear obj or constraints'
+!   print*, 'No Jacobian matrix since no nonlinear obj or constraints'
   nnCon     = 0
   nnJac     = 0
   nnObj     = 0
@@ -174,13 +174,13 @@ subroutine qwarmLP(xnd,pid,rcd, inform, nb, Probname, m, n, ne, &
   ! Specify options directly
   ! Options written as one string
   do i=1, nStrOpts
-    write(*,*) 'Calling miopt to set option: ', trim(stropts(i))
+!     write(*,*) 'Calling miopt to set option: ', trim(stropts(i))
     call miopt(trim(stropts(i)), iprint, isumm, inform)
   end do
 
   ! Integer valued options
   do i=1, nIntOpts
-    write(*,*) 'Calling miopti to set option ', trim(intopts(i)), ' to ', intvals(i)
+!     write(*,*) 'Calling miopti to set option ', trim(intopts(i)), ' to ', intvals(i)
     call miopti(trim(intopts(i)), intvals(i), iprint, isumm, inform)
   end do
 
@@ -189,7 +189,7 @@ subroutine qwarmLP(xnd,pid,rcd, inform, nb, Probname, m, n, ne, &
   call dq( realvals, realvalsd, nRealOpts )
 
   do i=1, nRealOpts
-    write(*,*) 'Calling mioptr to set option ', trim(realopts(i)), ' to ', realvalsd(i)
+!     write(*,*) 'Calling mioptr to set option ', trim(realopts(i)), ' to ', realvalsd(i)
     call mioptr(trim(realopts(i)), realvals(i), iprint, isumm, inform)
   end do
 
@@ -227,7 +227,7 @@ subroutine qwarmLP(xnd,pid,rcd, inform, nb, Probname, m, n, ne, &
   call qdq( bu, nb )
 
   if (warm) then
-      print *, 'Calling minoss. Warm start with provided basis (hs)'
+!       print *, 'Calling minoss. Warm start with provided basis (hs)'
 
       call minoss( 'Warm', m, n, nb, ne, nname,        &
           nncon, nnobj, nnjac,                &
@@ -237,19 +237,19 @@ subroutine qwarmLP(xnd,pid,rcd, inform, nb, Probname, m, n, ne, &
           inform, mincor, ns, ninf, sinf, obj, &
           z, nwcore )
 
-      write(nout, *) ' '
-      write(nout, *) 'Quad MINOS finished.'
-      write(nout, *) 'inform =', inform
-      write(nout, *) 'ninf   =', ninf
-      write(nout, *) 'sinf   =', sinf
-      write(nout, *) 'obj    =', obj
+!       write(nout, *) ' '
+!       write(nout, *) 'Quad MINOS finished.'
+!       write(nout, *) 'inform =', inform
+!       write(nout, *) 'ninf   =', ninf
+!       write(nout, *) 'sinf   =', sinf
+!       write(nout, *) 'obj    =', obj
 
       ! Return xn rounded to double precision
       call qd( xn, xnd, nb)
       call qd( pi, pid, m)
       call qd( rc, rcd, nb)
   else
-      print *, 'Calling minoss. Cold start' 
+!       print *, 'Calling minoss. Cold start'
 
       call minoss( 'Cold', m, n, nb, ne, nname,        &
           nncon, nnobj, nnjac,                &
@@ -259,12 +259,12 @@ subroutine qwarmLP(xnd,pid,rcd, inform, nb, Probname, m, n, ne, &
           inform, mincor, ns, ninf, sinf, obj, &
           z, nwcore )
 
-      write(nout, *) ' '
-      write(nout, *) 'Quad MINOS finished.'
-      write(nout, *) 'inform =', inform
-      write(nout, *) 'ninf   =', ninf
-      write(nout, *) 'sinf   =', sinf
-      write(nout, *) 'obj    =', obj
+!       write(nout, *) ' '
+!       write(nout, *) 'Quad MINOS finished.'
+!       write(nout, *) 'inform =', inform
+!       write(nout, *) 'ninf   =', ninf
+!       write(nout, *) 'sinf   =', sinf
+!       write(nout, *) 'obj    =', obj
 
       ! Return xn rounded to double precision
       call qd( xn, xnd, nb)
@@ -292,11 +292,11 @@ contains
 
     real(dp)                  :: da(n)   ! local array
 
-    write(*,'(z32)') a(n)
+!     write(*,'(z32)') a(n)
     da = real( a,dp)
     a  = real(da,qp)
-    write(*,'(z17)') da(n)
-    write(*,'(z32)') a(n)
+!     write(*,'(z17)') da(n)
+!     write(*,'(z32)') a(n)
   end subroutine qdq
 
   ! LY, 20 Jul 2015: First version of qd.
@@ -307,9 +307,9 @@ contains
       real(qp),     intent(in)  :: aq(n)
       real(dp),     intent(inout) :: ad(n)
 
-      write(*,'(z32)') aq(n)
+!       write(*,'(z32)') aq(n)
       ad = real(aq, dp)
-      write(*,'(z17)') ad(n)
+!       write(*,'(z17)') ad(n)
   end subroutine qd
 
   ! 11 Aug 2015: double to quad
@@ -318,9 +318,9 @@ contains
       real(dp),     intent(in)  :: ad(n)
       real(qp),    intent(inout):: aq(n)
 
-      write(*,'(z17)') ad(n)
+!       write(*,'(z17)') ad(n)
       aq = real(ad, qp)
-      write(*,'(z32)') aq(n)
+!       write(*,'(z32)') aq(n)
   end subroutine dq
 
 !  ! 11 Aug 2015: first version of get_nz_ind.

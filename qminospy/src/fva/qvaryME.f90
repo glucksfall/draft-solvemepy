@@ -20,7 +20,7 @@
 !   2) Compile with qminos library linked, and generate .so file to import into python:
 !      f2py -c qvaryME.pyf qvaryME.f90 -L/home/laurence/Software/qminos1114/qminos56/lib -lquadminos
 !
-!   3) From python: 
+!   3) From python:
 !      import qvaryME
 !      import numpy as np
 !      inform = np.array(0)     # gets modified by qsolveme: in/output exit flag
@@ -28,7 +28,7 @@
 !      x = qvaryME.qvaryme(inform, mu0, probname, M, nncon, nnJac, neJac, ha,
 !      ka, ad, bld, bud, nb, N, ne)
 !
-! 10 Aug 2015: first version. 
+! 10 Aug 2015: first version.
 ! 11 Aug 2015: put warm-start in loop
 ! 16 May 2016: allow first LP to be warm-started. Provide minos options
 !              via function interface instead of fort.14.
@@ -39,7 +39,7 @@ subroutine qvaryME(xnd, informs, nb, Probname, m, n, ne, &
     ha, ka, ad, bld, bud, hs, warm_first, &
     obj_inds, obj_coeffs, obj_vals, nVary, &
     nStrOpts, nIntOpts, nRealOpts, stropts, intopts, realopts, intvals, realvalsd)
-  ! all allocatable arrays passed to minoss are stored here 
+  ! all allocatable arrays passed to minoss are stored here
   ! Need to provide ha, ka, ad for all obj_inds, so that we can
   ! efficiently update Jacobian without having to shift columns each time
 
@@ -103,7 +103,7 @@ subroutine qvaryME(xnd, informs, nb, Probname, m, n, ne, &
   real(qp),     allocatable :: xn(:), pi(:), rc(:)
 
   ! LY: make double version of xn, which will be intent(output) to python
-  real(dp),     intent(out) :: xnd(nb)         ! double-rounded version of xn, which is quad 
+  real(dp),     intent(out) :: xnd(nb)         ! double-rounded version of xn, which is quad
 
   integer(ip),  allocatable :: name1(:), name2(:)
   character(8)              :: names(5)
@@ -120,12 +120,12 @@ subroutine qvaryME(xnd, informs, nb, Probname, m, n, ne, &
   a = real(ad, qp)
 
 
-  print*, 'Allocating name1, name2'
+!   print*, 'Allocating name1, name2'
   allocate( name1(nname), name2(nname) )
 
 !  print*, 'Allocating hs, pi, rc, xn'
 !  allocate( hs(nb), pi(m), rc(nb), xn(nb) )
-  print*, 'Allocating pi, rc, xn'
+!   print*, 'Allocating pi, rc, xn'
   allocate( pi(m), rc(nb), xn(nb) )
 
   print *, 'Allocated hs, pi, rc, xn'
@@ -269,7 +269,7 @@ subroutine qvaryME(xnd, informs, nb, Probname, m, n, ne, &
   do i = 1, nVary
       !--------------------------------------------------------
       ! Update the objective function:
-      ! A: last row; bl & bu objective becomes 
+      ! A: last row; bl & bu objective becomes
       ! A is pointers, row indices, and Aij
       ! ka: pointers (n+1). Column j is in ka[j]:(ka[j+1]-1)
       ! ha: row indices (ne)
@@ -291,8 +291,8 @@ subroutine qvaryME(xnd, informs, nb, Probname, m, n, ne, &
             l = l+1
             row = ha(ptr)
             if (row == m) then
-                if (col == obj_inds(i)) then 
-                    a(l) = obj_coeffsq(i) 
+                if (col == obj_inds(i)) then
+                    a(l) = obj_coeffsq(i)
                 else
                     a(l) = zero
                 end if
@@ -327,12 +327,12 @@ subroutine qvaryME(xnd, informs, nb, Probname, m, n, ne, &
                   z, nwcore )
           end if
 
-          write(nout, *) ' '
-          write(nout, *) 'Quad MINOS finished.'
-          write(nout, *) 'inform =', inform
-          write(nout, *) 'ninf   =', ninf
-          write(nout, *) 'sinf   =', sinf
-          write(nout, *) 'obj    =', obj
+!           write(nout, *) ' '
+!           write(nout, *) 'Quad MINOS finished.'
+!           write(nout, *) 'inform =', inform
+!           write(nout, *) 'ninf   =', ninf
+!           write(nout, *) 'sinf   =', sinf
+!           write(nout, *) 'obj    =', obj
 
           ! Return xn rounded to double precision
           call qd( xn, xnd, nb)
@@ -352,12 +352,12 @@ subroutine qvaryME(xnd, informs, nb, Probname, m, n, ne, &
               inform, mincor, ns, ninf, sinf, obj, &
               z, nwcore )
 
-          write(nout, *) ' '
-          write(nout, *) 'Quad MINOS finished.'
-          write(nout, *) 'inform =', inform
-          write(nout, *) 'ninf   =', ninf
-          write(nout, *) 'sinf   =', sinf
-          write(nout, *) 'obj    =', obj
+!           write(nout, *) ' '
+!           write(nout, *) 'Quad MINOS finished.'
+!           write(nout, *) 'inform =', inform
+!           write(nout, *) 'ninf   =', ninf
+!           write(nout, *) 'sinf   =', sinf
+!           write(nout, *) 'obj    =', obj
 
           ! Return xn rounded to double precision
           call qd( xn, xnd, nb)
@@ -392,11 +392,11 @@ contains
 
     real(dp)                  :: da(n)   ! local array
 
-    write(*,'(z32)') a(n)
+!     write(*,'(z32)') a(n)
     da = real( a,dp)
     a  = real(da,qp)
-    write(*,'(z17)') da(n)
-    write(*,'(z32)') a(n)
+!     write(*,'(z17)') da(n)
+!     write(*,'(z32)') a(n)
   end subroutine qdq
 
   ! LY, 20 Jul 2015: First version of qd.
@@ -407,9 +407,9 @@ contains
       real(qp),     intent(in)  :: aq(n)
       real(dp),     intent(inout) :: ad(n)
 
-      write(*,'(z32)') aq(n)
+!       write(*,'(z32)') aq(n)
       ad = real(aq, dp)
-      write(*,'(z17)') ad(n)
+!       write(*,'(z17)') ad(n)
   end subroutine qd
 
   ! 11 Aug 2015: double to quad
@@ -418,9 +418,9 @@ contains
       real(dp),     intent(in)  :: ad(n)
       real(qp),    intent(inout):: aq(n)
 
-      write(*,'(z17)') ad(n)
+!       write(*,'(z17)') ad(n)
       aq = real(ad, qp)
-      write(*,'(z32)') aq(n)
+!       write(*,'(z32)') aq(n)
   end subroutine dq
 
 !  ! 11 Aug 2015: first version of get_nz_ind.

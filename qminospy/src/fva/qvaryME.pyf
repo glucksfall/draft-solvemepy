@@ -1,0 +1,47 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module qvaryME ! in 
+    interface  ! in :qvaryME
+        subroutine qvaryme(xnd,informs,nb,probname,m,n,ne,ha,ka,ad,bld,bud,hs,warm_first,obj_inds,obj_coeffs,obj_vals,nvary,nstropts,nintopts,nrealopts,stropts,intopts,realopts,intvals,realvalsd) ! in :qvaryME:qvaryME.f90
+            real(kind=8) dimension(nb),intent(out),depend(nb) :: xnd
+            integer(kind=4) dimension(nvary),intent(inout) :: informs
+            integer(kind=4), optional,intent(in),check(len(bld)>=nb),depend(bld) :: nb=len(bld)
+            character*8 intent(in) :: probname
+            integer(kind=4) intent(in) :: m
+            integer(kind=4), optional,intent(in),check((len(ka)-1)>=n),depend(ka) :: n=(len(ka)-1)
+            integer(kind=4), optional,intent(in),check(len(ha)>=ne),depend(ha) :: ne=len(ha)
+            integer(kind=4) dimension(ne),intent(in) :: ha
+            integer(kind=4) dimension(n + 1),intent(in) :: ka
+            real(kind=8) dimension(ne),intent(in),depend(ne) :: ad
+            real(kind=8) dimension(nb),intent(in) :: bld
+            real(kind=8) dimension(nb),intent(in),depend(nb) :: bud
+            integer(kind=4) dimension(nb),intent(inout),depend(nb) :: hs
+            logical intent(in) :: warm_first
+            integer(kind=4) dimension(nvary),intent(in),depend(nvary) :: obj_inds
+            real(kind=8) dimension(nvary),intent(in),depend(nvary) :: obj_coeffs
+            real(kind=8) dimension(nvary),intent(inout),depend(nvary) :: obj_vals
+            integer(kind=4), optional,intent(in),check(len(informs)>=nvary),depend(informs) :: nvary=len(informs)
+            integer(kind=4), optional,intent(in),check(len(stropts)>=nstropts),depend(stropts) :: nstropts=len(stropts)
+            integer(kind=4), optional,intent(in),check(len(intopts)>=nintopts),depend(intopts) :: nintopts=len(intopts)
+            integer(kind=4), optional,intent(in),check(len(realopts)>=nrealopts),depend(realopts) :: nrealopts=len(realopts)
+            character(len=72) dimension(nstropts),intent(in) :: stropts
+            character(len=55) dimension(nintopts),intent(in) :: intopts
+            character(len=55) dimension(nrealopts),intent(in) :: realopts
+            integer(kind=4) dimension(nintopts),intent(in),depend(nintopts) :: intvals
+            real(kind=8) dimension(nrealopts),intent(in),depend(nrealopts) :: realvalsd
+            real(kind=16) dimension(30) :: dparm
+            integer dimension(30) :: iparm
+            common /m2parm/ dparm,iparm
+        end subroutine qvaryme
+        subroutine funcon ! in :qvaryME:qvaryME.f90
+        end subroutine funcon
+        subroutine funobj ! in :qvaryME:qvaryME.f90
+        end subroutine funobj
+        subroutine matmod ! in :qvaryME:qvaryME.f90
+        end subroutine matmod
+    end interface 
+end python module qvaryME
+
+! This file was auto-generated with f2py (version:1.21.6).
+! See http://cens.ioc.ee/projects/f2py2e/

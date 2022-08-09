@@ -36,7 +36,7 @@ import numpy as np
 import time
 import warnings
 import six
-#import draft_cobrame
+#import cobrame
 import re
 
 class ME_NLP1(ME_NLP):
@@ -98,7 +98,7 @@ class ME_NLP1(ME_NLP):
     def compile_expressions(self, verbosity=0):
         """
         Compile expressions for ME 1.0.
-        Use format consistent with draft_cobrame:
+        Use format consistent with cobrame:
         (met_index, rxn_index): stoichiometry, (None, rxn_index): (lower_bound, upper_bound)
         (met_index, None): (met_bound, met_constraint_sense)
         """
@@ -120,8 +120,8 @@ class ME_NLP1(ME_NLP):
                         metabolite._constraint_sense)
 
         toc = time.time() - tic
-        if verbosity > 0:
-            print('Finished compiling expressions in %f seconds' % toc)
+        #if verbosity > 0:
+            #print('Finished compiling expressions in %f seconds' % toc)
 
         return expressions
 
@@ -136,7 +136,7 @@ class ME_NLP1(ME_NLP):
         04 Aug 2016: ME 1.0 version
         """
         from qminospy import qvaryME
-        #from draft_cobrame import mu
+        #from cobrame import mu
         import time as time
         import six
 
@@ -168,12 +168,12 @@ class ME_NLP1(ME_NLP):
             hs = np.zeros(nb, np.dtype('i4'))
         else:
             warm = True
-            if verbosity > 0:
-                print('Warm-starting first run using basis of length %d'%len(hs))
+            #if verbosity > 0:
+                #print('Warm-starting first run using basis of length %d'%len(hs))
 
         # Get MINOS options
-        if verbosity > 0:
-            print('Getting MINOS parameters for LP')
+        #if verbosity > 0:
+            #print('Getting MINOS parameters for LP')
         stropts,intopts,realopts,intvals,realvals,nStrOpts,nIntOpts,nRealOpts =\
             self.get_solver_opts('lp')
 
@@ -193,11 +193,11 @@ class ME_NLP1(ME_NLP):
                 nrealopts = nRealOpts)
 
         t_elapsed = time.time()-tic
-        if verbosity>0:
-            print('Finished varyME in %f seconds for %d rxns (%d quadLPs)'%(t_elapsed,
-                    len(rxns_fva), len(obj_inds)))
+        #if verbosity>0:
+            #print('Finished varyME in %f seconds for %d rxns (%d quadLPs)'%(t_elapsed,
+                    #len(rxns_fva), len(obj_inds)))
 
-        # Return result consistent with draft_cobrame fva
+        # Return result consistent with cobrame fva
         fva_result = {
             (self.me.reactions[obj_inds0[2*i]].id):{
                 'maximum':obj_vals[2*i],
@@ -282,8 +282,8 @@ class ME_NLP1(ME_NLP):
                 xu[rind] = rxn.upper_bound
         toc = time.time() - tic
 
-        if verbosity > 0:
-            print('Finished substituting S,lb,ub in %f seconds' % toc)
+        #if verbosity > 0:
+            #print('Finished substituting S,lb,ub in %f seconds' % toc)
 
         c = [r.objective_coefficient for r in me.reactions]
         csense = [m._constraint_sense for m in me.metabolites]
@@ -377,16 +377,16 @@ class ME_NLP1(ME_NLP):
                 xu[rind] = rxn.upper_bound
         toc = time.time() - tic
 
-        if verbosity > 0:
-            print('Finished substituting S,lb,ub in %f seconds' % toc)
+        #if verbosity > 0:
+            #print('Finished substituting S,lb,ub in %f seconds' % toc)
 
         c = [r.objective_coefficient for r in me.reactions]
         csense = [m._constraint_sense for m in me.metabolites]
         tic = time.time()
         J, ne, P, I, V, bl, bu = makeME_LP(S,b,c,xl,xu,csense)
         toc = time.time()-tic
-        if verbosity > 0:
-            print('Finished makeME_LP in %f seconds' % toc)
+        #if verbosity > 0:
+            #print('Finished makeME_LP in %f seconds' % toc)
 
         # Solve a single LP
         m,n = J.shape
@@ -457,8 +457,12 @@ class ME_NLP1(ME_NLP):
 
         tic = time.time()
 
-        if verbosity >= 2:
-            print('iter\tmuopt    \ta     \tb     \tmu1       \tstat1')
+        #if verbosity >= 2:
+            #print('iter\tmuopt    \ta     \tb     \tmu1       \tstat1')
+        if verbosity:
+            print('Iteration\t       Growth Rate\t Solution to check\tSolver Status')
+            print('---------\t------------------\t------------------\t-------------')
+
         while iter < maxIter and not converged:
             # Just a sequence of feasibility checks
             mu1 = (a+b)/2.
@@ -476,12 +480,14 @@ class ME_NLP1(ME_NLP):
             warm = True
             iter = iter+1
 
-            if verbosity >= 2:
-                print(iter, muopt, a, b, mu1, stat1)
+            #if verbosity >= 2:
+                #print(iter, muopt, a, b, mu1, stat1)
+            if verbosity:
+                print('{:s}\t{:.16f}\t{:.16f}\t{:s}'.format(str(iter).rjust(9), muopt, mu1, 'Not feasible' if stat1 == 1 else stat1.capitalize()))
 
         toc = time.time()-tic
-        if verbosity >= 2:
-            print('Bisection done in %g seconds' % toc)
+        #if verbosity >= 2:
+            #print('Bisection done in %g seconds' % toc)
 
         # Save final solution
         me.solution = solution
@@ -491,8 +497,9 @@ class ME_NLP1(ME_NLP):
         return muopt, hs, xopt, cache
 
 
-    def bisectme(self, precision=1e-3, mumin=0.0, mumax=2.0, maxIter=100, quad=True, golden=True, basis=None, nlp_compat=False, check_feas0=False, zero_mu=1e-3, verbosity=0,
-            solver_precision='quad'):
+    def bisectme(self, precision=1e-3, mumin=0.0, mumax=2.0, maxIter=100, quad=True,
+                 basis=None, nlp_compat=False, check_feas0=False, zero_mu=1e-3,
+                 verbosity=0, solver_precision='quad', golden=True):
         """
         Bisection using qMINOS.
         TODO: set quad=False if need fast basis for subsequent quadMINOS
@@ -545,8 +552,12 @@ class ME_NLP1(ME_NLP):
 
         tic = time.time()
 
-        if verbosity > 1:
-            print('iter\tmuopt    \ta     \tb     \tmu1       \tmu2       \tstat1  \tstat2')
+        #if verbosity > 1:
+            #print('iter\tmuopt    \ta     \tb     \tmu1       \tmu2       \tstat1  \tstat2')
+        if verbosity:
+            print('Iteration\t       Growth Rate\t Solution to check\tSolver Status')
+            print('---------\t------------------\t------------------\t-------------')
+
         while iter < maxIter and not converged:
             mu1 = b - (b - a) * phi
             mu2 = a + (b - a) * phi
@@ -575,12 +586,14 @@ class ME_NLP1(ME_NLP):
             warm = True
             iter = iter+1
 
-            if verbosity > 1:
-                print(iter, muopt, a, b, mu1, mu2, stat1, stat2)
+            #if verbosity > 1:
+                #print(iter, muopt, a, b, mu1, mu2, stat1, stat2)
+            if verbosity:
+                print('{:s}\t{:.16f}\t{:.16f}\t{:s}'.format(str(iter).rjust(9), muopt, mu1, 'Not feasible' if stat1 == 1 else stat1.capitalize()))
 
         toc = time.time() - tic
-        if verbosity > 0:
-            print('Bisection done in %g seconds' % toc)
+        #if verbosity > 0:
+            #print('Bisection done in %g seconds' % toc)
 
         # Save final solution
         me.solution = solution

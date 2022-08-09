@@ -383,8 +383,8 @@ class ME_NLP:
         inform = np.array(0)
         probname = 'me_lp'
 
-        if verbosity > 0:
-            print('Getting MINOS parameters from ME_NLP...')
+        #if verbosity > 0:
+            #print('Getting MINOS parameters from ME_NLP...')
 
         precision = precision.lower()
 
@@ -468,12 +468,12 @@ class ME_NLP:
             status = 'optimal'
         #self.me.solution = Solution(f, x_primal, x_dict, y, y_dict, 'qminos', time_elapsed, status)
         self.me.solution = Solution(
-			objective_value = x_dict['biomass_dilution'],
-			status = status,
-			fluxes = x_dict, # x_primal is a np.array with only fluxes info
-			reduced_costs = y_dict,
-			shadow_prices = None,
-			)
+            objective_value = x_dict['biomass_dilution'],
+            status = status,
+            fluxes = x_dict, # x_primal is a np.array with only fluxes info
+            reduced_costs = y_dict,
+            shadow_prices = None,
+            )
 
         return x, status, hs
 
@@ -762,8 +762,8 @@ class ME_NLP:
                 ('Warm-starting first run using basis of length %d' % len(hs))
 
         # Get MINOS options
-        if verbosity > 0:
-            print('Getting MINOS parameters for LP')
+        #if verbosity > 0:
+            #print('Getting MINOS parameters for LP')
         stropts,intopts,realopts,intvals,realvals,nStrOpts,nIntOpts,nRealOpts =\
             self.get_solver_opts('lp')
 
@@ -880,7 +880,7 @@ class ME_NLP:
             #     print('Getting MINOS parameters from specs file:', param_file)
             # else:
 
-            print('Getting MINOS parameters from ME_NLP...')
+            #print('Getting MINOS parameters from ME_NLP...')
             stropts,intopts,realopts,intvals,realvals,nStrOpts,nIntOpts,nRealOpts =\
                 self.get_solver_opts('nlp')
 
@@ -913,7 +913,14 @@ class ME_NLP:
         status = self.inform
         if int(status) == 0:
             status = 'optimal'
-        self.me.solution = Solution(f, x_primal, x_dict, y, y_dict, 'qminos', time_elapsed, status)
+        #self.me.solution = Solution(f, x_primal, x_dict, y, y_dict, 'qminos', time_elapsed, status)
+        self.me.solution = Solution(
+            objective_value = x_dict['biomass_dilution'],
+            status = status,
+            fluxes = x_dict, # x_primal is a np.array with only fluxes info
+            reduced_costs = y_dict,
+            shadow_prices = None,
+            )
 
         # Return
         return x, self.inform, hs

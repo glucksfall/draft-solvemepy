@@ -11,7 +11,7 @@
 !
 ! Modified code from Ding Ma and Michael Saunders for compatibility with f2py
 ! and calling from python
-! 
+!
 ! Laurence Yang, SBRG, UCSD
 !
 ! How to generate python extension module via f2py, and use from python:
@@ -24,7 +24,7 @@
 !   2) Compile with qminos library linked, and generate .so file to import into python:
 !      f2py -c qsolveME.pyf qMEfuns.f90 qmatrixA.f90 -L/home/laurence/Software/qminos1114/qminos56/lib -lquadminos
 !
-!   3) From python: 
+!   3) From python:
 !      import qsolveME
 !      import numpy as np
 !      inform = np.array(0)     # gets modified by qsolveme: in/output exit flag
@@ -32,7 +32,7 @@
 !      x = qsolveME.qsolveme(inform, mu0, probname, M, nnCon, nnJac, neJac, ha,
 !      ka, ad, bld, bud, nb, N, ne)
 !
-! 19 Jul 2015: [LY] first version. 
+! 19 Jul 2015: [LY] first version.
 ! 20 Jul 2015: [LY] reproduced fortran solution from python--still fort.8 input
 ! file, though
 ! 30 Jul 2015: [LY] return inform (exit status) as intent(inout)
@@ -110,8 +110,8 @@ subroutine qsolveME(xnd, inform, nb, mu0d, Probname, m, n, ne, nnCon, nnJac, neJ
   real(qp),     allocatable :: pi(:), rc(:)
 
   ! LY: make double version of xn, which will be intent(output) to python
-  real(dp),   intent(inout) :: xnd(nb)      ! double-rounded version of xn, which is quad 
-  real(qp)                  :: xn(nb)       ! quad  
+  real(dp),   intent(inout) :: xnd(nb)      ! double-rounded version of xn, which is quad
+  real(qp)                  :: xn(nb)       ! quad
 
   integer(ip),  allocatable :: name1(:), name2(:)
   !character(8)              :: names(5), Probname
@@ -132,7 +132,7 @@ subroutine qsolveME(xnd, inform, nb, mu0d, Probname, m, n, ne, nnCon, nnJac, neJ
 
   ! LY: instead of reading a file, pass model data directly from python
   ! Assign nnCon, nnJac, etc. directly from python
-  ! Or make a internal procedure to interface the required variable 
+  ! Or make a internal procedure to interface the required variable
   ! assignments clearly to python?
 
    in     = 8         ! File from ~/matlab/tinyME/dumpME_NLP.m (e.g. tinyME.txt)
@@ -388,17 +388,17 @@ subroutine qsolveME(xnd, inform, nb, mu0d, Probname, m, n, ne, nnCon, nnJac, neJ
           inform, mincor, ns, ninf, sinf, obj, &
           z, nwcore )
 
-      write(nout, *) ' '
-      write(nout, *) 'Quad MINOS finished.'
-      write(nout, *) 'inform =', inform
-      write(nout, *) 'ninf   =', ninf
-      write(nout, *) 'sinf   =', sinf
-      write(nout, *) 'obj    =', obj
+!       write(nout, *) ' '
+!       write(nout, *) 'Quad MINOS finished.'
+!       write(nout, *) 'inform =', inform
+!       write(nout, *) 'ninf   =', ninf
+!       write(nout, *) 'sinf   =', sinf
+!       write(nout, *) 'obj    =', obj
 
       ! Return xn rounded to double precision
       call qd( xn, xnd, nb)
   else
-      print *, 'Calling minoss. Cold start' 
+      print *, 'Calling minoss. Cold start'
       print *, 'Setting xn to zero and xn(1) to mu0'
       xn(1:nb) = zero
       xn(1)    = mu0    ! Initialize mu
@@ -411,12 +411,12 @@ subroutine qsolveME(xnd, inform, nb, mu0d, Probname, m, n, ne, nnCon, nnJac, neJ
           inform, mincor, ns, ninf, sinf, obj, &
           z, nwcore )
 
-      write(nout, *) ' '
-      write(nout, *) 'Quad MINOS finished.'
-      write(nout, *) 'inform =', inform
-      write(nout, *) 'ninf   =', ninf
-      write(nout, *) 'sinf   =', sinf
-      write(nout, *) 'obj    =', obj
+!       write(nout, *) ' '
+!       write(nout, *) 'Quad MINOS finished.'
+!       write(nout, *) 'inform =', inform
+!       write(nout, *) 'ninf   =', ninf
+!       write(nout, *) 'sinf   =', sinf
+!       write(nout, *) 'obj    =', obj
 
       ! Return xn rounded to double precision
       call qd( xn, xnd, nb)
@@ -499,7 +499,7 @@ subroutine funobj( mode, nnObj, x, fobj, gobj, nstate, nprob, z, lenz )
 
   fobj    = x(1)
   gobj(1) = 1.0
-    
+
 end subroutine funobj
 
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -553,7 +553,7 @@ subroutine funcon( mode, nnCon, nnJac, neJac, x, &
   end do
 
   f = mu*gcon(1:nnCon)
-    
+
 end subroutine funcon
 
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
